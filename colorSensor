@@ -1,0 +1,81 @@
+
+package com.qualcomm.ftcrobotcontroller.opmodes;
+
+        import android.app.Activity;
+        import android.graphics.Color;
+        import android.view.View;
+
+        import com.qualcomm.ftcrobotcontroller.R;
+        import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+        import com.qualcomm.robotcore.hardware.ColorSensor;
+        import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
+        import com.qualcomm.robotcore.hardware.LED;
+        import com.qualcomm.robotcore.hardware.TouchSensor;
+        import com.qualcomm.robotcore.hardware.UltrasonicSensor;
+
+public class colorSensor extends LinearOpMode {
+
+    public enum ColorSensorDevice {ADAFRUIT, HITECHNIC_NXT, MODERN_ROBOTICS_I2C};
+
+    public ColorSensorDevice device = ColorSensorDevice.HITECHNIC_NXT;
+
+    ColorSensor colorSensor;
+    UltrasonicSensor Ultrasony;
+
+
+
+    @Override
+    public void runOpMode() throws InterruptedException {
+        hardwareMap.logDevices();
+
+        switch (device) {
+            case HITECHNIC_NXT:
+                colorSensor = hardwareMap.colorSensor.get("colorSensor");
+                Ultrasony = hardwareMap.ultrasonicSensor.get("Ultrasony");
+                break;
+            case ADAFRUIT:
+                colorSensor = hardwareMap.colorSensor.get("lady");
+                break;
+            case MODERN_ROBOTICS_I2C:
+                colorSensor = hardwareMap.colorSensor.get("mr");
+                break;
+        }
+
+
+
+        waitForStart();
+
+        float hsvValues[] = {0,0,0};
+        final float values[] = hsvValues;
+        final View relativeLayout = ((Activity) hardwareMap.appContext).findViewById(R.id.RelativeLayout);
+        while (opModeIsActive()) {
+
+            switch (device) {
+                case HITECHNIC_NXT:
+                    Color.RGBToHSV(colorSensor.red(), colorSensor.green(), colorSensor.blue(), hsvValues);
+                    break;
+                case ADAFRUIT:
+                    Color.RGBToHSV((colorSensor.red() * 255) / 800, (colorSensor.green() * 255) / 800, (colorSensor.blue() * 255) / 800, hsvValues);
+                    break;
+                case MODERN_ROBOTICS_I2C:
+                    Color.RGBToHSV(colorSensor.red()*8, colorSensor.green()*8, colorSensor.blue()*8, hsvValues);
+                    break;
+            }
+            telemetry.addData("Clear", colorSensor.alpha());
+            telemetry.addData("Red  ", colorSensor.red());
+            telemetry.addData("Green", colorSensor.green());
+            telemetry.addData("Blue ", colorSensor.blue());
+            telemetry.addData("Hue", hsvValues[0]);
+            telemetry.addData("Distance", Ultrasony.getUltrasonicLevel());
+
+            relativeLayout.post(new Runnable() {
+                public void run() {
+                    relativeLayout.setBackgroundColor(Color.HSVToColor(0xff, values));
+                }
+            });
+            waitOneFullHardwareCycle();
+        }
+    }
+
+
+}
